@@ -1,0 +1,54 @@
+{
+   "abstract" : "Wrapper Class for the various JSON classes.",
+   "author" : [
+      "Chris Thompson C<< cthom at cpan.org >>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Module::Install version 1.01, CPAN::Meta::Converter version 2.120921",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "JSON-Any",
+   "no_index" : {
+      "directory" : [
+         "inc",
+         "t",
+         "xt"
+      ]
+   },
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "6.42",
+            "Test::More" : "0.42"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "6.42"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Carp" : "0",
+            "JSON" : "2.02",
+            "JSON::Syck" : "0",
+            "JSON::XS" : "2.3"
+         }
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "license" : [
+         "http://dev.perl.org/licenses/"
+      ],
+      "repository" : {
+         "url" : "git://github.com/perigrin/json-any.git"
+      }
+   },
+   "version" : "1.29"
+}

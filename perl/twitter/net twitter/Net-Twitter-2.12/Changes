@@ -1,0 +1,122 @@
+Revision history for Net-Twitter
+
+2.12 - Wed Mar 25, 2009
+	o Removed test that uses show_progress arg to LWP::UserAgent, as this did not
+		exist until v5.815.
+	o Because of the above require LWP::UA of at least v2.032, as the two remaining 
+		tests are OK with that version.
+
+2.11 - Thu Mar 19, 2009
+	o Added useragent_args to new() to allow passing args to the LWP::UA object
+	o Added test for above
+	o Removed POD about dependancies. 
+
+2.10 - Thu Feb 26, 2009
+	o Fix https://rt.cpan.org/Ticket/Display.html?id=43658 which proves I'm an idiot. 
+		The SYNOPSIS fix in 2.08 doesn't match up with reality. Passing args to 
+		new() with {} would break. This is now fixed.
+
+2.09 - Thu Feb 20, 2009
+	o Embarrassing. Since the very first 2.xx update_profile has been missing. This 
+		adds it back in and tests it.
+	
+2.08 - Thu Feb 19, 2009
+	o Fixed ridiculously broken logic in get_error JSON deparse.
+	o POD fix with SYNOPSIS to make the examples match the {} requirement
+	
+2.07 - Thu Feb 12, 2009
+	o Add new friends_ids and followers_ids social graph methods
+	o Added tests for the above.
+	o Fix bug where get_error was not decoding the JSON that was returned.
+	o Added documentation about hashref passing needing {} specified.
+	
+2.06 - Mon Jan 26, 2009
+	o 2.05 had glitch which caused some methods like user_timeline to call the 
+		incorrect URL when called with no args, returning the wrong user's 
+		timeline.
+	o Added test to prevent the above.
+	o Added Net::Twitter::Search, as I now have permissions.
+	o Added distribution of the local test that checks all arg combos.
+	
+2.05 - Sun Jan 25, 2009
+	o public_timeline can now take zero args.
+	o Any method which can take "id" as the only arg in the passed hashref can now also take that arg
+		value as a string.
+	o More arg validation updates. We're running out of places to break, knock on wood.
+	o Code run through local test not packaged with the module which tests each method with every
+		conceivable combination of args. There should be no more places the arg validation breaks
+		valid arg combos, and it should be much more difficult for me to break it so in the future.
+
+2.04 - Sat Jan 24, 2009
+	o More tweaks from Marc Mims on regression tests
+	o Reworked bad arg handling which caused subsequent calls of several methods to fail.
+	o Fixed issue with arg handling in show_status
+	o Removed Net::Twitter::Search until I can get assistance from Brenda, CPAN complains that I don't have
+		rights to the namespace and people are reporting problems finding 2.x because the index is off.
+	o Switch to using Module::Install
+
+2.03 - Thu Jan 22, 2009
+	o Bad MANIFEST kept the regression tests out of the 2.02 distribution.
+	o Change clienturl to default to http://www.net-twitter.info and removed pointless XML warning.
+	
+2.02 - Thu Jan 22, 2009
+	o Add arrayref_on_error switch at the suggestion of Ryan Rose. Changes default return value on error.
+	o Added regression test suite by Marc Mims, hopefully no more crappy releases missing things.
+	o Fixed several bugs in arg handling and validation to make it work correctly. Should now be 100%
+
+2.01 - Fri Jan 16, 2009
+	o Add back in the inexplicably missing update_twittervision
+	o Fixed several errors with methods that can take a single arg, not a hashref. This has to happen
+		for back compat with 1.xx
+	o Patch from semifor to fix args handling on GET methods. It worked but was semantically wrong.
+	
+2.00 - Thu Jan 15, 2009
+	o Final release including all of the below.
+	o Differences since 2.00_05
+		o Added Net::Twitter::Search stub file to act as a wrapper.
+		o Added clone() method
+		o More POD cleanup.
+		o Switched from die/warn to Carp::carp/croak
+
+2.00_05 - Mon Jan 12, 2009
+	o 2.00_04 had a glaring error that prevented anything that used an HTTP POST, 
+		like update(), from actually, you know, POSTing.
+	o Great suggestion from semifor on passing form values to LWP::UserAgent replaced 34 lines of
+		ridiculous arg handling with 3 lines and a call to URI. Much better.
+	o Yet more POD and minor tweaks.
+
+2.00_04 - Sat Jan 10, 2009
+	o Remove result hack for relationship_exists as twitter has fixed their end.
+	o Completely rework arg validation to allow calling with no args, yet trapping 
+		where this is wrong.
+	o Add JSON eval trapping to regular methods, it was mistakenly only 
+		happening on search.
+	o Massive POD rewrites to clarify and expand, and even correct a few mistakes.
+	
+2.00_03 - Fri Jan 9, 2009
+	o Add Net::Identica which wraps a Net::Twitter object and sets the default connection to identi.ca
+	o Fix show_user argument handling which was broken to this point
+	o Add full search API
+	o Trap errors in JSON decoding when Twitter returns a 200 Success, preventing JSON::Any from die-ing
+	o Various POD fixes and updates
+	
+2.00_02 - Wed Jan 7, 2009
+	o Applied http://github.com/semifor/net-twitter/commit/34b042f653d3c9c39f0003504070b4014da7d854
+	o Applied logic from patch to 1.xx by Chris Nelson to prevent bad JSON from 
+		causing JSON::Any to die. JSON errors should now gracefully return undef.
+	o POD change, spurious h in the URL for rt.cpan.org
+	o Updated copyright to 2009
+	o Add IRC and other contact info.
+
+2.00_01 - Mon Dec 22, 2008
+	o From scratch redo. All the old code is gone and replaced with new.
+	o Changes against 1.xx include:
+		o identica quick switch to new() to set identi.ca connect info
+		o Full arg validation. This can be bypassed.
+		o All methods are now generated dynamically from a lookup 
+		  table at runtime.
+		
+For changes in the 1.xx series, please see:
+
+http://search.cpan.org/src/CTHOM/Net-Twitter-1.23/Changes
+

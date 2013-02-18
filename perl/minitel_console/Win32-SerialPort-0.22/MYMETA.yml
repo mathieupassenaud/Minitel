@@ -1,0 +1,24 @@
+---
+abstract: 'User interface to Win32 Serial API calls'
+author:
+  - 'Bill Birthisel <wcbirthisel@alum.mit.edu>'
+build_requires:
+  ExtUtils::MakeMaker: 0
+configure_requires:
+  ExtUtils::MakeMaker: 0
+dynamic_config: 0
+generated_by: 'ExtUtils::MakeMaker version 6.55_02, CPAN::Meta::Converter version 2.120921'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Win32-SerialPort
+no_index:
+  directory:
+    - t
+    - inc
+requires:
+  Test::More: 0
+  Win32: 0
+  Win32::API: 0
+version: 0.22

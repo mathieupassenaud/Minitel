@@ -1,0 +1,825 @@
+NAME
+    Net::Twitter - Perl interface to twitter.com
+
+VERSION
+    This document describes Net::Twitter version 2.12
+
+SYNOPSIS
+       #!/usr/bin/perl
+
+       use Net::Twitter;
+
+       my $twit = Net::Twitter->new({username=>"myuser", password=>"mypass" });
+
+       my $result = $twit->update({status => "My current Status"});
+
+       my $twit->credentials("otheruser", "otherpass");
+
+       my $result = $twit->update({status => "Status for otheruser"});
+
+       my $result = $twitter->search('Albi the racist dragon');
+
+       foreach my $tweet (@{ $results }) {
+         my $speaker =  $tweet->{from_user};
+         my $text = $tweet->{text};
+         my $time = $tweet->{created_at};
+         print "$time <$speaker> $text\n";
+       }
+
+        my $steve = $twitter->search('Steve');
+        $twitter->update($steve .'? Who is steve?');
+
+DESCRIPTION
+    http://www.twitter.com provides a web 2.0 type of ubiquitous presence.
+    This module allows you to set your status, as well as review the
+    statuses of your friends.
+
+    You can view the latest status of Net::Twitter on it's own twitter
+    timeline at http://twitter.com/net_twitter
+
+METHODS AND ARGUMENTS
+    Listed below are the methods available through the object.
+
+    Please note that any method that takes a hashref as an argument must be
+    called in the form:
+
+        $twit->method({arg => "value"});
+
+        and not
+
+        $twit->method(arg => "value");
+
+    If the curly brackets around the arguments are missing, the code which
+    implements the convenience methods allowing you to specify a single
+    argument as a string will interpret "arg" as your argument.
+
+    "new(...)"
+        You must supply a hash containing the configuration for the
+        connection.
+
+        Valid configuration items are:
+
+        "username"
+            Username of your account at twitter.com. This is usually your
+            email address. "user" is an alias for "username". REQUIRED.
+
+        "password"
+            Password of your account at twitter.com. "pass" is an alias for
+            "password" REQUIRED.
+
+        "useragent"
+            OPTIONAL: Sets the User Agent header in the HTTP request. If
+            omitted, this will default to
+            "Net::Twitter/$Net::Twitter::Version (Perl)"
+
+        "useragent_class"
+            OPTIONAL: An LWP::UserAgent compatible class, e.g.,
+            LWP::UserAgent::POE. If omitted, this will default to
+            LWP::UserAgent.
+
+        "useragent_args"
+            OPTIONAL: A hashref passed to this option will be passed along
+            to the UserAgent "new()" call to specify its configuration. This
+            will pass to whatever class is passed in "useragent_class", if
+            any. See the POD for LWP::UserAgent for details.
+
+            NOTE: Any value passed in this hashref for "agent" will be
+            overwritten. If setting the useragent is necessary, use the
+            "useragent" option to "new()"
+
+        "no_fallback"
+            OPTIONAL: If a "useragent_class" is specified but fails to load,
+            the default behavior is to warn and fall back to using regular
+            LWP::UserAgent. If "no_fallback" is set to a boolean true value,
+            the "new" method will cause the code to "die"
+
+        "source"
+            OPTIONAL: Sets the source name, so messages will appear as "from
+            <source>" instead of "from web". Defaults to displaying "Perl
+            Net::Twitter". Note: see Twitter FAQ, your client source needs
+            to be included at twitter manually.
+
+            This value will be a code which is assigned to you by Twitter.
+            For example, the default value is "twitterpm", which causes
+            Twitter to display the "from Perl Net::Twitter" in your
+            timeline.
+
+            Twitter claims that specifying a nonexistant code will cause the
+            system to default to "from web". If you don't have a code from
+            twitter, don't set one.
+
+        "clientname"
+            OPTIONAL: Sets the X-Twitter-Client-Name: HTTP Header. If
+            omitted, this defaults to "Perl Net::Twitter"
+
+        "clientver"
+            OPTIONAL: Sets the X-Twitter-Client-Version: HTTP Header. If
+            omitted, this defaults to the current Net::Twitter version,
+            $Net::Twitter::VERSION.
+
+        "clienturl"
+            OPTIONAL: Sets the X-Twitter-Client-URL: HTTP Header. If
+            omitted, this defaults to "http://www.net-twitter.info".
+
+        "apiurl"
+            OPTIONAL. The URL of the API for twitter.com. This defaults to
+            "http://twitter.com/" if not set.
+
+        "apihost"
+        "apirealm"
+            OPTIONAL: If you do point to a different URL, you will also need
+            to set "apihost" and "apirealm" so that the internal LWP can
+            authenticate.
+
+            "apihost" defaults to "www.twitter.com:80".
+
+            "apirealm" defaults to "Twitter API".
+
+        "identica"
+            OPTIONAL: Passing a true value for identica to new() will preset
+            values for "apiurl", "apirealm" and "apihost" which will point
+            at the http://identi.ca twitter compatible API.
+
+            All methods in Net::Twitter work as documented, except where
+            listed in the identica/laconica documentation at:
+
+            <http://laconi.ca/trac/wiki/TwitterCompatibleAPI>
+
+            For simplicity, you can also use Net::Identica in your script
+            instead of Net::Twitter, which will default to identica being
+            set to true.
+
+        "twittervision"
+            OPTIONAL: If the "twittervision" argument is passed with a true
+            value, the module will enable use of the
+            <http://www.twittervision.com> API. If enabled, the "show_user"
+            method will include relevant location data in its response
+            hashref. Also, the "update_twittervision" method will allow
+            setting of the current location.
+
+        "skip_arg_validation"
+            OPTIONAL: Beginning in 2.00, Net::Twitter will validate
+            arguments passed to the various API methods, flagging required
+            args that were not passed, and discarding args passed that do
+            not exist in the API specification. Passing a boolean True for
+            skip_arg_validation into new() will skip this validation process
+            entirely and allow requests to proceed regardless of the args
+            passed. This defaults to false.
+
+        "die_on_validation"
+            OPTIONAL: In the event that the arguments passed to a method do
+            not pass the validation process listed above, the default action
+            will be to warn the user, make the error readable through the
+            get_error method listed below, and to return undef to the
+            caller. Passing a boolean true value for die_on_validation to
+            new() will change this behavior to simply executing a die() with
+            the appropriate error message. This defaults to false.
+
+        "arrayref_on_error"
+            OPTIONAL: By default any methods which find an error, whether
+            from twitter or from bad args, will return undef. Passing
+            "arrayref_on_error" as a boolean TRUE to new() will cause all
+            error states to return an empty arrayref instead. As most
+            successful responses are in the form of arrayrefs, this will
+            cause a uniform response type for all calls. All error messages
+            and codes are still available with methods such as "get_error".
+
+    "clone()"
+        Returns a shallow copy of the Net::Twitter object. This can be used
+        when Net::Twitter is used in a Parallel or Asynchronous framework to
+        enable easier access to returned error values. All clones share the
+        same LWP::UserAgent object, so calling "credentials()" will change
+        the login credentials of all clones.
+
+    "credentials($username, $password, $apihost, $apiurl)"
+        Change the credentials for logging into twitter. This is helpful
+        when managing multiple accounts.
+
+        "apirealm" and "apihost" are optional and will default to the
+        existing settings if omitted.
+
+    "http_code"
+        Returns the HTTP response code of the most recent request.
+
+    "http_message"
+        Returns the HTTP response message of the most recent request.
+
+    "get_error"
+        If the last request returned an error, the hashref containing the
+        error message can be retrieved with "get_error". This will provide
+        some additional debugging information in addition to the http code
+        and message above.
+
+  STATUS METHODS
+    "update(...)"
+        Set your current status. This returns a hashref containing your most
+        recent status. Returns undef if an error occurs.
+
+        The method accepts a hashref containing one or two arguments.
+
+        "status"
+            REQUIRED. The text of your status update.
+
+        "in_reply_to_status_id"
+            OPTIONAL. The ID of an existing status that the status to be
+            posted is in reply to. This implicitly sets the
+            in_reply_to_user_id attribute of the resulting status to the
+            user ID of the message being replied to. Invalid/missing status
+            IDs will be ignored.
+
+    "update_twittervision($location)"
+        If the "twittervision" argument is passed to "new" when the object
+        is created, this method will update your location setting at
+        twittervision.com.
+
+        If the "twittervision" arg is not set at object creation, this
+        method will return an empty hashref, otherwise it will return a
+        hashref containing the location data.
+
+    "show_status($id)"
+        Returns status of a single tweet. The status' author will be
+        returned inline.
+
+        The argument is the ID or email address of the twitter user to pull,
+        and is REQUIRED.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id".
+
+    "destroy_status($id)"
+        Destroys the status specified by the required ID parameter. The
+        authenticating user must be the author of the specified status.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id".
+
+    "user_timeline(...)"
+        This returns an arrayref to an array of hashrefs, containing the 20
+        (or more) posts from either the authenticating user (if no argument
+        is passed), or from a specific user if the id field is passed in a
+        hashref.
+
+        Accepts an optional argument of a hashref:
+
+        "id"
+            OPTIONAL: ID or email address of a user other than the
+            authenticated user, in order to retrieve that user's
+            user_timeline.
+
+        "since"
+            OPTIONAL: Narrows the returned results to just those statuses
+            created after the specified HTTP-formatted date.
+
+        "since_id"
+            OPTIONAL: Narrows the returned results to just those statuses
+            created after the specified ID.
+
+        "count"
+            OPTIONAL: Narrows the returned results to a certain number of
+            statuses. This is limited to 200.
+
+        "page"
+            OPTIONAL: Gets the 20 next most recent statuses from the
+            authenticating user and that user's friends, eg "page=3".
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id". If passed as
+        a string, no other args can be specified.
+
+    "public_timeline()"
+        This returns an arrayref to an array of hashrefs, containing the
+        information and status of each of the last 20 posts by all
+        non-private twitter users.
+
+    "friends_timeline(...)"
+        Returns the 20 most recent statuses posted from the authenticating
+        user and that user's friends. It's also possible to request another
+        user's friends_timeline via the id parameter below.
+
+        If called with no arguments, returns the friends' timeline for the
+        authenticating user.
+
+        Accepts an optional hashref as an argument:
+
+        "since"
+            OPTIONAL: Narrows the returned results to just those statuses
+            created after the specified HTTP-formatted date.
+
+        "since_id"
+            OPTIONAL: Narrows the returned results to just those statuses
+            created after the specified ID.
+
+        "count"
+            Narrows the returned results to a certain number of statuses.
+            This is limited to 200.
+
+        "page"
+            Gets the 20 next most recent statuses from the authenticating
+            user and that user's friends, eg "page=3".
+
+    "replies(...)"
+        This returns an arrayref to an array of hashrefs, containing the
+        information and status of each of the last 20 replies (status
+        updates prefixed with @username posted by users who are friends with
+        the user being replied to) to the authenticating user.
+
+        "since"
+            OPTIONAL: Narrows the returned results to just those replies
+            created after the specified HTTP-formatted date, up to 24 hours
+            old.
+
+        "since_id"
+            OPTIONAL: Returns only statuses with an ID greater than (that
+            is, more recent than) the specified ID.
+
+        "page"
+            OPTIONAL: Gets the 20 next most recent replies.
+
+  USER METHODS
+    "friends()"
+        This returns an arrayref to an array of hashrefs. Each hashref
+        contains the information and status of those you have marked as
+        friends in twitter. Returns undef if an error occurs.
+
+        Takes a hashref as an arg:
+
+        "since"
+            OPTIONAL: Narrows the returned results to just those friendships
+            created after the specified HTTP-formatted date, up to 24 hours
+            old.
+
+        "id"
+            OPTIONAL: User id or email address of a user other than the
+            authenticated user, in order to retrieve that user's friends.
+
+        "page"
+            OPTIONAL: Gets the 100 next most recent friends, eg "page=3".
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id". If passed as
+        a string, no other args can be specified.
+
+    "followers()"
+        his returns an arrayref to an array of hashrefs. Each hashref
+        contains the information and status of those who follow your status
+        in twitter. Returns undef if an error occurs.
+
+        If called without an argument returns the followers for the
+        authenticating user, but can pull followers for a specific ID.
+
+        Accepts an optional hashref for arguments:
+
+        "id"
+            OPTIONAL: The ID or screen name of the user for whom to request
+            a list of followers.
+
+        "page"
+            OPTIONAL: Retrieves the next 100 followers.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id". If passed as
+        a string, no other args can be specified.
+
+    "show_user()"
+        Returns a hashref containing extended information of a single user.
+
+        The argument is a hashref containing either the user's ID or email
+        address. It is required to pass either one or the other, but not
+        both:
+
+        "id"
+            The ID or screen name of the user.
+
+        "email"
+            The email address of the user. If "email" is specified, "id" is
+            ignored.
+
+        If the "twittervision" argument is passed to "new" when the object
+        is created, this method will include the location information for
+        the user from twittervision.com, placing it inside the returned
+        hashref under the key "twittervision".
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id". If passed as
+        a string, no other args can be specified.
+
+  DIRECT MESSAGE METHODS
+    "direct_messages()"
+        Returns a list of the direct messages sent to the authenticating
+        user.
+
+        Accepts an optional hashref for arguments:
+
+        "page"
+            OPTIONAL: Retrieves the 20 next most recent direct messages.
+
+        "since"
+            OPTIONAL: Narrows the returned results to just those statuses
+            created after the specified HTTP-formatted date.
+
+        "since_id"
+            OPTIONAL: Narrows the returned results to just those statuses
+            created after the specified ID.
+
+    "sent_direct_messages()"
+        Returns a list of the direct messages sent by the authenticating
+        user.
+
+        Accepts an optional hashref for arguments:
+
+        "page"
+            OPTIONAL: Retrieves the 20 next most recent direct messages.
+
+        "since"
+            OPTIONAL: Narrows the returned results to just those statuses
+            created after the specified HTTP-formatted date.
+
+        "since_id"
+            OPTIONAL: Narrows the returned results to just those statuses
+            created after the specified ID.
+
+    "new_direct_message($args)"
+        Sends a new direct message to the specified user from the
+        authenticating user.
+
+        REQUIRES an argument of a hashref:
+
+        "user"
+            REQUIRED: ID or email address of user to send direct message to.
+
+        "text"
+            REQUIRED: Text of direct message.
+
+    "destroy_direct_message($id)"
+        Destroys the direct message specified in the required ID parameter.
+        The authenticating user must be the recipient of the specified
+        direct message.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id".
+
+  FRIENDSHIP METHODS
+    "create_friend(...)"
+        Befriends the user specified in the id parameter as the
+        authenticating user. Returns a hashref containing the befriended
+        user's information when successful.
+
+        "id"
+            REQUIRED. The ID or screen name of the user to befriend.
+
+        "follow"
+            OPTIONAL. Enable notifications for the target user in addition
+            to becoming friends.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id". If passed as
+        a string, no other args can be specified.
+
+    "destroy_friend($id)"
+        Discontinues friendship with the user specified in the ID parameter
+        as the authenticating user. Returns a hashref containing the
+        unfriended user's information when successful.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id".
+
+    "relationship_exists($user_a, $user_b)"
+        Tests if friendship exists between the two users specified as
+        arguments. Both arguments are REQUIRED.
+
+  SOCIAL GRAPH METHODS
+    "friends_ids()"
+        Returns an arrayref to an array of numeric IDs for every user the
+        specified user is following. Returns undef if an error occurs.
+
+        Takes a hashref as an arg:
+
+        "id"
+            OPTIONAL: User id or email address of a user other than the
+            authenticated user, in order to retrieve that user's friends.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id". If passed as
+        a string, no other args can be specified. If no args are passed,
+        returns the list for the authenticating user.
+
+    "followers_ids()"
+        Returns an arrayref to an array of numeric IDs for every user the
+        specified user is followed by. Returns undef if an error occurs.
+
+        Accepts an optional hashref for arguments:
+
+        "id"
+            OPTIONAL: The ID or screen name of the user for whom to request
+            a list of followers.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id". If passed as
+        a string, no other args can be specified. If no args are passed,
+        returns the list for the authenticating user.
+
+  ACCOUNT METHODS
+    "verify_credentials()"
+        Returns a hashref containing the authenticating user's extended
+        information if the login credentials are correct.
+
+    "end_session()"
+        Ends the session of the authenticating user, returning a null
+        cookie. Use this method to sign users out of client-facing
+        applications like widgets.
+
+    "update_location($location)"
+        WARNING: This method has been deprecated in favor of the
+        update_profile method below. It still functions today but will be
+        removed in future versions.
+
+        Updates the location attribute of the authenticating user, as
+        displayed on the side of their profile and returned in various API
+        methods.
+
+    "update_delivery_device($device)"
+        Sets which device Twitter delivers updates to for the authenticating
+        user. $device is required and must be one of: "sms", "im", or
+        "none". Sending none as the device parameter will disable IM or SMS
+        updates.
+
+    "update_profile_colors(...)"
+        Sets one or more hex values that control the color scheme of the
+        authenticating user's profile page on twitter.com. These values are
+        also returned in the show_user method.
+
+        This method takes a hashref as an argument, with the following
+        optional fields containing a hex color string.
+
+        "profile_background_color"
+        "profile_text_color"
+        "profile_link_color"
+        "profile_sidebar_fill_color"
+        "profile_sidebar_border_color"
+
+    "update_profile_image(...)")
+        Updates the authenticating user's profile image.
+
+        This takes as a required argument a GIF, JPG or PNG image, no larger
+        than 700k in size. Expects raw image data, not a pathname or URL to
+        the image.
+
+    "update_profile_background_image(...)")
+        Updates the authenticating user's profile background image.
+
+        This takes as a required argument a GIF, JPG or PNG image, no larger
+        than 800k in size. Expects raw image data, not a pathname or URL to
+        the image.
+
+    "rate_limit_status"
+        Returns the remaining number of API requests available to the
+        authenticating user before the API limit is reached for the current
+        hour. Calls to rate_limit_status require authentication, but will
+        not count against the rate limit.
+
+    "update_profile"
+        Sets values that users are able to set under the "Account" tab of
+        their settings page.
+
+        Takes as an argument a hashref containing fields to be updated. Only
+        the parameters specified will be updated. For example, to only
+        update the "name" attribute include only that parameter in the
+        hashref.
+
+        "name"
+            OPTIONAL: Twitter user's name. Maximum of 40 characters.
+
+        "email"
+            OPTIONAL: Email address. Maximum of 40 characters. Must be a
+            valid email address.
+
+        "url"
+            OPTIONAL: Homepage URL. Maximum of 100 characters. Will be
+            prepended with "http://" if not present.
+
+        "location"
+            OPTIONAL: Geographic location. Maximum of 30 characters. The
+            contents are not normalized or geocoded in any way.
+
+        "description"
+            OPTIONAL: Personal description. Maximum of 160 characters.
+
+  FAVORITE METHODS
+    "favorites()"
+        Returns the 20 most recent favorite statuses for the authenticating
+        user or user specified by the ID parameter.
+
+        This takes a hashref as an argument:
+
+        "id"
+            OPTIONAL. The ID or screen name of the user for whom to request
+            a list of favorite statuses.
+
+        "page"
+            OPTIONAL: Gets the 20 next most recent favorite statuses, eg
+            "page=3".
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id". If passed as
+        a string, no other args can be specified.
+
+    "create_favorite()"
+        Sets the specified ID as a favorite for the authenticating user.
+
+        This takes a hashref as an argument:
+
+        "id"
+            REQUIRED: The ID of the status to favorite.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id".
+
+    "destroy_favorite()"
+        Removes the specified ID as a favorite for the authenticating user.
+
+        This takes a hashref as an argument:
+
+        "id" REQUIRED. The ID of the status to un-favorite.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id".
+
+  NOTIFICATION METHODS
+    "enable_notifications()"
+        Enables notifications for updates from the specified user to the
+        authenticating user. Returns the specified user when successful.
+
+        This takes a hashref as an argument:
+
+        "id" REQUIRED: The ID or screen name of the user to receive notices
+        from.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id".
+
+    "disable_notifications()"
+        Disables notifications for updates from the specified user to the
+        authenticating user. Returns the specified user when successful.
+
+        This takes a hashref as an argument:
+
+        "id"
+            REQUIRED: The ID or screen name of the user to stop receiving
+            notices from.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id".
+
+  BLOCK METHODS
+    "create_block($id)"
+        Blocks the user id passed as an argument from the authenticating
+        user. Returns a hashref containing the user information for the
+        blocked user when successful.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id".
+
+        You can find more information about blocking at
+        <http://help.twitter.com/index.php?pg=kb.page&id=69>.
+
+    "destroy_block($id)"
+        Un-blocks the user id passed as an argument from the authenticating
+        user. Returns a hashref containing the user information for the
+        blocked user when successful.
+
+        This method can take the "id" argument passed to it either as a
+        single string, or in a hashref with a key called "id".
+
+  SEARCH
+    As of version 2.00, Net::Twitter implements the search functionality of
+    Twitter, using code derived from Net::Twitter::Search by Brenda Wallace.
+
+    "search()"
+        Performs a search on http://search.twitter.com for your query
+        string.
+
+        This returns a hashref which is slightly different than the other
+        methods such as public_timeline. The hashref contains a key named
+        "results" which contains an arrayref to an array of hashrefs, each
+        hashref containing a single post. These hashrefs do not include the
+        "user" item with the posting user's information such as the
+        *_timeline methods do.
+
+        This method takes a required hashref as an argument:
+
+        "q"
+        "query"
+            REQUIRED: Specifies the string to search for. This can include
+            any of the Twitter search operators listed at
+            <http://search.twitter.com/operators>. Please see below for
+            information about backwards compatibility with
+            Net::Twitter::Search.
+
+            Both q and query are aliases to the same argument. Specifying
+            both will use the value specified for "query".
+
+            Please note that you cannot use the "near" search operator to
+            specify arbitrary Lat/Long locations. For this use the "geocode"
+            argument below.
+
+        "lang"
+            OPTIONAL: Restricts results to a specific language, given by an
+            ISO 639-1 code. For example {'lang' => 'en'}
+
+        "rpp"
+            OPTIONAL: Sets the number of posts to return per page, up to a
+            max of 100.
+
+        "page"
+            OPTIONAL: Sets the page number (starting at 1) to return, up to
+            a max of roughly 1500 results (based on rpp * page)
+
+        "since_id"
+            OPTIONAL: Restricts returned posts to those status ids greater
+            than the given id.
+
+        "geocode"
+            OPTIONAL: Returns posts by users located within the radius of
+            the given latitude/longitude, where the user's location is taken
+            from their Twitter profile. The format of the parameter value is
+            "latitide,longitude,radius", with radius units specified as
+            either "mi" (miles) or "km" (kilometers).
+
+        "show_user"
+            OPTIONAL: When set to a true boolean value "show_user" will
+            prepend "<username>:" to the beginning of the text of each post
+            returned.
+
+    BACKWARDS COMPATIBILITY WITH Net::Twitter::Search
+        In order to maintain backwards compatibility with
+        Net::Twitter::Search, the query/q arguments can be specified as
+        plain text:
+
+            $res = $twit->search("Farkle McFancypants")
+
+        In addition, you can, in this case, specify all of the above
+        arguments in a hashref as the second argument to the search method.
+
+            $res = $twit->search("Farkle McFancypants", {lang => "en"})
+
+        Any query/q arguments in the hashref passed in this manner will be
+        ignored, and the module will proceed using the string passed in the
+        first argument as the query.
+
+  HELP METHODS
+    "test()"
+        Returns the string "ok" in the requested format with a 200 OK HTTP
+        status code.
+
+    "downtime_schedule()"
+        Returns the same text displayed on <http://twitter.com/home> when a
+        maintenance window is scheduled.
+
+BUGS AND LIMITATIONS
+    Please report any bugs or feature requests to
+    "bug-net-twitter@rt.cpan.org", or through the web interface at
+    <https://rt.cpan.org/Dist/Display.html?Queue=Net-Twitter>.
+
+    You can also join the Net::Twitter IRC channel at
+    irc://irc.perl.org/net-twitter
+
+    You can track Net::Twitter development at
+    http://github.com/ct/net-twitter/tree/2.0
+
+AUTHOR
+    Chris Thompson <cpan@cthompson.com>
+
+    The test framework for Net::Twitter was written by Marc "semifor" Mims.
+
+    The framework of this module is shamelessly stolen from Net::AIML. Big
+    ups to Chris "perigrin" Prather for that.
+
+LICENCE AND COPYRIGHT
+    Copyright (c) 2009, Chris Thompson <cpan@cthompson.com>. All rights
+    reserved.
+
+    This module is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself. See perlartistic.
+
+DISCLAIMER OF WARRANTY
+    BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+    FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+    OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+    PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+    EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+    ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+    YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+    NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+    IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+    WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+    REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+    TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+    CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+    SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+    RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+    FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+    SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+    DAMAGES.
+

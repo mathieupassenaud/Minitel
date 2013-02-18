@@ -1,0 +1,9 @@
+http://www.floodgap.com/software/ttytter/
+
+Install curl for windows
+http://curl.haxx.se/download.html
+
+Changer 
+my (@paths) = split(/\:/, $ENV{'PATH'});
+par
+my (@paths) = split(/\;/, $ENV{'PATH'});
